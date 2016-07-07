@@ -22,7 +22,7 @@ This can be null
 Directory path containing PHP files can be passed as positional argument and it walks through it to modify every .php file
 ```sh
     $ ./migrate.py --con /path/to/con.php /path/to/php_project
-    $ ./migrate.py '<?php $connect = mysql_connect( 'localhost', 'root', '' ); mysql_select_db( 'test' );'
+    $ ./migrate.py "<?php $connect = mysql_connect( 'localhost', 'root', '' ); mysql_select_db( 'test' );"
     $ ./migrate.py --con '$conn' /path/to/php_project
     $ ./migrate.py file.php
     $ ./migrate.py --con /path/to/con.php /path/to/php_project --dep '$conn,$conn2'
