@@ -28,7 +28,7 @@ class MySQLize( object ):
 		self.dep_con = dep_con
 
 		# if File parameter is a file, read it!
-		if os.path.isfile( File ):
+		if self._is_file() and os.path.isfile( File ):
 			try:
 				with open( File, 'r' ) as php_file:
 					php_file.seek( 0 )
@@ -39,16 +39,19 @@ class MySQLize( object ):
 			# Its a string, pass it to an object
 			self.content = File
 
-		# Connection object is a file, read and get the connection variable
-		if con and os.path.isfile( con ):
+		# Connection variable name provided
+		if con is not None and con.startswith( '$' ):
+			self.con = con
+		elif con is not None and os.path.isfile( con ):
+			# Connection object is a file, read and get the connection variable
 			with open( con, 'r' ) as f:
 				self.con = self._get_con( f.read() )
-		elif con is None:
+		else:
 			# Connection object not given, attempt to read it from the current file
 			self.con = self._get_con()
-		else:
-			# Its not a file, but it is given. That must be the variable name itself. Use it!
-			self.con = con
+
+	def _is_file( self ):
+		return not self.file.strip().startswith( '<?php' ) or not self.file.strip().startswith( '<?' )
 
 	def _get_con( self, content = False ):
 		"""Gets the connection variable from file or content"""
@@ -68,10 +71,13 @@ class MySQLize( object ):
 		con_args = com.findall( self.content )
 
 		db = re.findall( r'{0}[\s]*?\((.*?)[\s]*?\)[\s]*'.format( re.escape( 'mysql_select_db' ) ), self.content )
+		
 		if db:
-			db = db[ 0 ].strip()
-			con_args.append( db )
+			db = db[ 0 ].strip().split( ',' )
+			con_args.append( db[ 0 ] )
 		con_args = [ x.strip() for x in con_args ]
+		if self.con in con_args:
+			con_args.remove( self.con )
 
 		self.content = re.sub( r'mysql_[p]?connect[\s]*?\(.*?\)', '{0}( {1} )'.format( 'mysqli_connect', ', '.join( con_args ) ), self.content )
 
@@ -87,7 +93,7 @@ class MySQLize( object ):
 
 		# Wait, we don't have a connection variable. Stop!
 		if not self.con:
-			print( 'Unable to get connection variable' )
+			print( 'Unable to get connection variable, make sure the connection file path is correct' )
 			sys.exit( 1 )
 
 		self._migrate_connect()
@@ -102,12 +108,14 @@ class MySQLize( object ):
 				for result in results:
 					# Regex pattern for getting arguments from a function
 					args = re.findall( r'{0}[\s]*?\((.*?)[\s]*?\)[\s]*'.format( re.escape( func ) ), result )
-					
+
 					# Lets not get confused with commas inside an SQL query and ones separating arguments
-					if re.findall( r'\"', args[ 0 ] ):
+					if re.findall( r'\",+[^\']', args[ 0 ] ):
 						args = args[ 0 ].strip().split( '",' )
-					elif re.findall( r"\'", args[ 0 ] ):
+						args[ 0 ] += '"'
+					elif re.findall( r"\',+[^\"]", args[ 0 ] ):
 						args = args[ 0 ].strip().split( '\',' )
+						args[ 0 ] += '\''
 					else:
 				 		args = args[ 0 ].strip().split( ',' )
 
@@ -131,7 +139,7 @@ class MySQLize( object ):
 								args.remove( self.con )
 							# Then add it again, having the index of 0
 							args.insert( 0, self.con )
-
+							
 							# If any depreciated connection variable provided, remove it and stop asking
 							if self.dep_con:
 								for dep_con in self.dep_con:
@@ -156,11 +164,12 @@ class MySQLize( object ):
 			
 			# Create backup
 			backup = '{0}.org'.format( os.path.join( path, filename ) )
-			print( 'Backing up {0} to {1}'.format( self.file, backup ) )
+			print( 'Backing up {0} -> {1}'.format( self.file, backup ) )
 			shutil.copy( self.file, backup )
-			print( 'Migrating {0}\n'.format( self.file ) )
+			print( 'Migrating {0}'.format( self.file ) )
 			with open( self.file, 'w' ) as f:
 				f.write( self.content )
+				print( 'Done!\n' );
 		else:
 			print( self.content )
 			sys.exit( 1 )
