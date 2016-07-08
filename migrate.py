@@ -6,7 +6,7 @@ import shutil
 
 class MySQLize( object ):
 
-	# Defining objects containing depreciated functions with the supported ones as value, the boolean value means the connection object needs to be passed
+	# Defining objects containing deprecated functions with the supported ones as value, the boolean value means the connection object needs to be passed
 	func = {
 		'mysql_query' : [ 'mysqli_query', True ],
 		'mysql_real_escape_string' : [ 'mysqli_real_escape_string', True ],
@@ -82,7 +82,7 @@ class MySQLize( object ):
 		self.content = re.sub( r'mysql_[p]?connect[\s]*?\(.*?\)', '{0}( {1} )'.format( 'mysqli_connect', ', '.join( con_args ) ), self.content )
 
 	def find_replace( self ):
-		"""Main file that does the replacing of depreciated functions"""
+		"""Main method that does the replacing of deprecated functions"""
 
 		# Check if the current file has a connection variable that doesn't match the one provided
 		check_con = self._get_con( self.content )
@@ -97,7 +97,7 @@ class MySQLize( object ):
 			sys.exit( 1 )
 
 		self._migrate_connect()
-		# Search for each depreciated functions in the file
+		# Search for each deprecated functions in the file
 		for func in self.func.iterkeys():
 			com = re.compile( r'{0}[\s]*?\(.*?\)'.format( re.escape( func ) ) )
 			results = com.findall( self.content )
@@ -122,7 +122,7 @@ class MySQLize( object ):
 				 	# Sanitize arguments
 					args = [ x.strip() for x in args ]
 
-					# Find the function name only from depreciated functions found in file
+					# Find the function name only from deprecated functions found in file
 					func_name = re.findall( r'([a-z_A-Z0-9]+[\s]*?)\(.*?\)', result )
 
 					# Remove empty argument values
@@ -132,7 +132,7 @@ class MySQLize( object ):
 					if func_name:
 						func_name = func_name[ 0 ].strip()
 
-						# We are checking if the replacement for the depreciated function should have a connection variable as argument
+						# We are checking if the replacement for the deprecated function should have a connection variable as argument
 						if len( self.func[ func_name ] ) > 1:
 							# Connection variable already existing in arguments? Remove it
 							if self.con in args:
@@ -140,7 +140,7 @@ class MySQLize( object ):
 							# Then add it again, having the index of 0
 							args.insert( 0, self.con )
 							
-							# If any depreciated connection variable provided, remove it and stop asking
+							# If any deprecated connection variable provided, remove it and stop asking
 							if self.dep_con:
 								for dep_con in self.dep_con:
 									if dep_con in args:
@@ -148,7 +148,7 @@ class MySQLize( object ):
 
 						# mysql_* functions mostly have 2 arguments, if its more than 2; prompt the user
 						if len( args ) > 2:
-							dep = raw_input( 'This function \n\n{0}\n\n has 2 or more arguments in {1}, one might be a connection. Enter the depreciated argument to remove or leave empty: $'.format( result, self.file ) )
+							dep = raw_input( 'This function \n\n{0}\n\n has 2 or more arguments in {1}, one might be a connection. Enter the deprecated argument to remove or leave empty: $'.format( result, self.file ) )
 							dep = '${0}'.format( dep.replace( '$', '' ) )
 							if dep and dep in args:
 								args.remove( dep )
