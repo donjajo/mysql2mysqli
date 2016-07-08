@@ -13,7 +13,7 @@ Clone or download the repository. Type
 ```
 And get help options
 - --con parameter accepts the connection variable, this can be the path to the connection file and the package tries to get the variable itself. If not provided, it takes from the current file
-- --dep This is the depreciated connection variable to remove, like we have mysql_query( $query, $conn ). You supply $conn to this parameter
+- --dep This is the deprecated connection variable to remove, like we have mysql_query( $query, $conn ). You supply $conn to this parameter
 ```sh
     $ ./migrate.py --dep '$conn'
 ```
