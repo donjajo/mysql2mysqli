@@ -68,11 +68,16 @@ class MySQLize( object ):
 			return False
 
 	def _migrate_connect( self ):
+		"""Migrates the mysql_connect itself"""
+
+		# Regex for getting mysql_connect arguments
 		com = re.compile( r'mysql_[p]?connect[\s]*?\((.*?)[\s]*?\)[\s]*' )
 		con_args = com.findall( self.content )
 
+		# Get the database name from the first appearance of mysql_select_db
 		db = re.findall( r'{0}[\s]*?\((.*?)[\s]*?\)[\s]*'.format( re.escape( 'mysql_select_db' ) ), self.content )
 		
+		# Still in the process of getting the database name
 		if db:
 			db = db[ 0 ].strip().split( ',' )
 			con_args.append( db[ 0 ] )
