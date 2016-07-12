@@ -56,12 +56,13 @@ class MySQLize( object ):
 	def _get_con( self, content = False ):
 		"""Gets the connection variable from file or content"""
 		# Compile regex for getting the variable
-		com = re.compile( r'(\$[a-zA-Z0-9\_].*?)mysql_[p]?connect' )
+		com = re.compile( r'(\$[a-zA-Z0-9\_\-\>].*?)[\s]*?\=[\s]*?.[\s]*?mysql_[p]?connect' )
 		con_var = com.findall( self.content ) if not content else com.findall( content )
-		
+	
 		# ye! I found the variable, return it
-		if con_var and re.findall( r'\=', con_var[ 0 ] ):
-			return con_var[ 0 ].replace( '=', '' ).strip()
+		if con_var:
+			con_var[ 0] = con_var[ 0 ].replace( '=', '' ).strip() if re.findall( r'\=', con_var[ 0 ] ) else con_var[ 0 ]
+			return con_var[ 0 ]
 		else:
 			# Nah! I didn't :(
 			return False
